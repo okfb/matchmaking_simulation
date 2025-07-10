@@ -23,12 +23,23 @@ class Match:
 class MatchmakingQueue:
     def __init__(self):
         self.queue: List[Player] = []
-        self.matches: List[Match] = []
+        self.active_matches: List[Match] = []
+        self.completed_matches: List[Match] = []
 
     def add_player(self, player: Player):
         self.queue.append(player)
 
-    def step(self, current_time: int):
+    def step(self, current_time: int, stay_chance: float = 0.5, match_duration: int = 5):
+        # Finish active matches
+        finished = [m for m in self.active_matches if current_time - m.start_time >= match_duration]
+        self.active_matches = [m for m in self.active_matches if m not in finished]
+        for match in finished:
+            self.completed_matches.append(match)
+            for player in match.players:
+                if random.random() < stay_chance:
+                    player.join_time = current_time
+                    self.queue.append(player)
+
         # Sort by join time to give priority to older players
         self.queue.sort(key=lambda p: p.join_time)
         matched_ids = set()
@@ -43,7 +54,7 @@ class MatchmakingQueue:
                     matched_ids.add(player.id)
                     matched_ids.add(candidate.id)
                     region = player.region if player.region == candidate.region else "Cross"
-                    self.matches.append(Match([player, candidate], current_time, region))
+                    self.active_matches.append(Match([player, candidate], current_time, region))
                     break
         # Remove matched players from queue
         self.queue = [p for p in self.queue if p.id not in matched_ids]
@@ -63,12 +74,16 @@ class MatchmakingQueue:
 
 
 def random_player(pid: int, current_time: int) -> Player:
-    regions = ["NA", "EU", "ASIA"]
+    regions = REGIONS
+    elo = int(random.gauss(1500, 200))
+    elo = max(800, min(2200, elo))
+    level = int(random.gauss(25, 10))
+    level = max(1, min(50, level))
     return Player(
         id=pid,
         region=random.choice(regions),
-        elo=random.randint(1000, 2000),
-        level=random.randint(1, 50),
+        elo=elo,
+        level=level,
         join_time=current_time,
     )
 
@@ -76,7 +91,12 @@ def random_player(pid: int, current_time: int) -> Player:
 REGIONS = ["NA", "EU", "ASIA"]
 
 
-def run_simulation(steps: int = 100, join_chance: float = 0.5):
+def run_simulation(
+    steps: int = 100,
+    join_chance: float = 0.5,
+    stay_chance: float = 0.5,
+    match_duration: int = 5,
+):
     mm = MatchmakingQueue()
     player_id = 0
     history = []  # Keep queue sizes for visualization
@@ -84,16 +104,16 @@ def run_simulation(steps: int = 100, join_chance: float = 0.5):
         if random.random() < join_chance:
             mm.add_player(random_player(player_id, t))
             player_id += 1
-        mm.step(t)
+        mm.step(t, stay_chance=stay_chance, match_duration=match_duration)
         history.append(len(mm.queue))
 
     queue_dist = [len([p for p in mm.queue if p.region == r]) for r in REGIONS]
     match_regions = REGIONS + ["Cross"]
-    match_dist = [len([m for m in mm.matches if m.region == r]) for r in match_regions]
+    match_dist = [len([m for m in mm.completed_matches if m.region == r]) for r in match_regions]
     return mm, history, queue_dist, match_dist, match_regions
 
 
 if __name__ == "__main__":
     mm, history, qdist, mdist, _ = run_simulation()
-    print(f"Total matches: {len(mm.matches)}")
+    print(f"Total matches: {len(mm.completed_matches)}")
     print("Queue distribution:", dict(zip(REGIONS, qdist)))

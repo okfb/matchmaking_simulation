@@ -30,5 +30,19 @@ python interactive.py
 ```
 
 A window will open with sliders for the number of steps and player join chance.
-Press **Run** to update the charts showing how many players remain in the queue
-and how many matches are created per region.
+Use the **Stay Chance** slider to control the probability that players queue
+for another match after finishing one. Press **Run** to update the charts
+showing how many players remain in the queue and how many matches are created
+per region.
+
+### Building an Executable
+
+If you have `pyinstaller` installed you can build a standalone Windows binary:
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile interactive.py
+```
+
+The resulting executable will be placed in the `dist` folder. Cross–compiling
+from Linux may require additional setup.

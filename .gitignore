@@ -1,2 +1,5 @@
 __pycache__/
 queue_size.png
+build/
+dist/
+*.spec
