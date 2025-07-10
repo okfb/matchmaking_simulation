@@ -113,6 +113,27 @@ def run_simulation(
     return mm, history, queue_dist, match_dist, match_regions
 
 
+def simulation_generator(
+    join_chance: float = 0.5,
+    stay_chance: float = 0.5,
+    match_duration: int = 5,
+):
+    """Yield queue and match distributions step by step."""
+    mm = MatchmakingQueue()
+    player_id = 0
+    t = 0
+    while True:
+        if random.random() < join_chance:
+            mm.add_player(random_player(player_id, t))
+            player_id += 1
+        mm.step(t, stay_chance=stay_chance, match_duration=match_duration)
+        qdist = [len([p for p in mm.queue if p.region == r]) for r in REGIONS]
+        match_regions = REGIONS + ["Cross"]
+        mdist = [len([m for m in mm.completed_matches if m.region == r]) for r in match_regions]
+        yield t, qdist, mdist, match_regions
+        t += 1
+
+
 if __name__ == "__main__":
     mm, history, qdist, mdist, _ = run_simulation()
     print(f"Total matches: {len(mm.completed_matches)}")

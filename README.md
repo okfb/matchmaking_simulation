@@ -23,17 +23,17 @@ each timestep.
 
 ### Interactive Demo
 
-To experiment with different parameters interactively, launch:
+To see the simulation evolve in real time, launch:
 
 ```bash
 python interactive.py
 ```
 
-A window will open with sliders for the number of steps and player join chance.
-Use the **Stay Chance** slider to control the probability that players queue
-for another match after finishing one. Press **Run** to update the charts
-showing how many players remain in the queue and how many matches are created
-per region.
+A window appears with sliders for join and stay probabilities. Press **Start**
+to begin an animated run of the simulation. The plots update every few hundred
+milliseconds, showing how players move through the queue and how many matches
+are formed per region. Use **Pause** to stop the animation and adjust the
+sliders; press **Start** again to restart with the new settings.
 
 ### Building an Executable
 
